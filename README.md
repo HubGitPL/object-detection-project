@@ -1,6 +1,7 @@
 # object-detection-project
 
-## Important note: the project is still ongoing
+> [!IMPORTANT]
+> Work is in progress. Things will change
 
 This is a project for the university subject: **Multimedia Services and Applications** (Usługi i aplikacje multimedialne)
 
