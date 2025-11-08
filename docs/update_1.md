@@ -4,8 +4,11 @@
 
 Podział prezentacji:
 MF 1,2
+
 JS 3,6
+
 AB 4,5
+
 PW 7,8
 
 Każdy około 7.5 minuty prezentuje.
