@@ -1,1 +1,6 @@
 *.xlsx
+CS2-1
+.venv
+.mypy_cache
+runs
+predictions

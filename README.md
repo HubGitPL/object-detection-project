@@ -20,6 +20,28 @@ This project is divided into 2 main sections:
 
 The project documentation and code are primarily in English (with some Polish documentation in the `/docs` section).
 
+## Running Scripts
+
+### Train Model
+
+```bash
+uv run src/train.py
+```
+
+### Run Predictions
+
+```bash
+uv run src/predict.py --weights runs/detect/train/weights/best.pt --source <image/video/directory>
+```
+
+Prediction arguments:
+
+- `--weights` (required): Path to model weights
+- `--source` (required): Image, video, or directory path
+- `--conf` (optional): Confidence threshold (default: 0.25)
+- `--imgsz` (optional): Image size (default: 640)
+- `--output` (optional): Output directory (default: predictions)
+
 ## Authors
 
 - **Artur Binczyk** - Main Developer
