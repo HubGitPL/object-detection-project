@@ -25,6 +25,6 @@ Wprowadzenie do teorii, algorytmy detakcji obiektow (napisac co i jak ze wybrali
 
 wprowadzenie do YOLO, (Artur porownanie yolo)
 
-scenariusze demo (W CS co się będzie działo) (Patryk)
+scenariusze demo (W CS co się będzie działo) (Patryk) screen -> model - > na podstawie tego input, flusha vac, ropz
 
 szczegóły teorii datasety, środowisko/narzędzia (Jerzy) 
