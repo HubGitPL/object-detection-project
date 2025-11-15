@@ -2,6 +2,8 @@
 
 **ZS** - do sb robimy prezke swojej części. Link: https://docs.google.com/presentation/d/1pgs4wKDYjQyiD0MF-jEwrBULLYgCa9Sz4f6ThqPnhG4/edit?usp=sharing
 
+**UiAM** teoria - https://docs.google.com/presentation/d/1tp-5eLh7KLdOQgDpVfG6nbCjNbHhwAYFrB8PcWkRaNc/edit?usp=sharing
+
 Podział prezentacji:
 
 MF 1,2
