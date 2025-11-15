@@ -15,3 +15,16 @@ AB 4,5
 PW 7,8
 
 Każdy około 7.5 minuty prezentuje.
+
+
+
+UIAM - teoria
+
+
+Wprowadzenie do teorii, algorytmy detakcji obiektow (napisac co i jak ze wybralismy YOLO) (mF)
+
+wprowadzenie do YOLO, (Artur porownanie yolo)
+
+scenariusze demo (W CS co się będzie działo) (Patryk)
+
+szczegóły teorii datasety, środowisko/narzędzia (Jerzy) 
