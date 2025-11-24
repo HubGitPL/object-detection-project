@@ -1,17 +1,16 @@
 [project]
 name = "object-detection-project"
 version = "0.1.0"
-description = "Add your description here"
+description = "Object Detection in Video Data Stream"
 readme = "README.md"
-requires-python = ">=3.13"
+requires-python = ">=3.10"
 dependencies = [
-    "huggingface-hub>=1.1.2",
-    "python-dotenv>=1.2.1",
-    "roboflow>=1.2.11",
-    "supervision>=0.26.1",
-    "torch>=2.9.0",
-    "ultralytics>=8.3.227",
+    "opencv-python",
+    "pynput",
+    "huggingface-hub",
+    "python-dotenv",
+    "roboflow",
+    "supervision",
+    "torch",
+    "ultralytics @ git+https://github.com/sunsmarterjie/yolov12.git",
 ]
-
-[tool.uv.sources]
-ultralytics = { git = "https://github.com/sunsmarterjie/yolov12.git" }
