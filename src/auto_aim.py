@@ -61,16 +61,21 @@ def main():
 
             for result in results:
                 boxes = result.boxes.cpu().numpy()
-
+                boxes = sorted(boxes, key=lambda b: b.conf[0], reverse=True)
+                
                 for box in boxes:
                     cls = int(box.cls[0])
                     conf = box.conf[0]
 
-                    if cls == target_class:
+                    if cls == target_class and conf > 0.3:
+                        print(
+                            f"Detected {CLASS_NAMES[cls]} with confidence {conf:.2f}"
+                        )
                         x1, y1, x2, y2 = box.xyxy[0]
                         cx, cy = get_center_point([x1, y1, x2, y2])
 
                         mouse.position = (cx, cy)
+                        print(f"Moved mouse to: ({cx}, {cy})")
                         break
 
             time.sleep(0.01)

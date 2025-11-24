@@ -13,4 +13,5 @@ dependencies = [
     "supervision",
     "torch",
     "ultralytics @ git+https://github.com/sunsmarterjie/yolov12.git",
+    "mss>=10.1.0",
 ]
