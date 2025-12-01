@@ -62,6 +62,66 @@ def sort_boxes_by_center_distance(boxes, center_x, center_y):
 
     return sorted(boxes, key=dist_sq)
 
+
+def get_head_position(box):
+    x1, y1, x2, y2 = box.xyxy[0]
+    box_height = y2 - y1
+    head_x = (x1 + x2) / 2.0
+    head_y = y1 + box_height * 0.1
+    return int(head_x), int(head_y)
+
+
+def move_mouse_smoothly(mouse, target_x, target_y, center_x, center_y, max_movement=200, hysteresis=3, ):
+    speed = 0.2
+    curve = 1.6
+    offset_x = target_x - center_x
+    offset_y = target_y - center_y
+    
+    distance = math.hypot(offset_x, offset_y)
+    
+    if distance < hysteresis:
+        return 0, 0
+    # if distance > max_movement:
+    #     scale = max_movement / distance
+    #     offset_x *= scale
+    #     offset_y *= scale
+    
+    target_speed = (distance ** curve) / (distance) * speed
+
+    # --- 3. Apply the speed to the direction ---
+    # We multiply the normalized vector by our new target speed
+    move_x = (offset_x / distance) * target_speed
+    move_y = (offset_y / distance) * target_speed
+    
+    mouse.move(move_x, move_y)
+    return move_x, move_y
+
+
+def filter_boxes_by_class(boxes, target_class):
+    if target_class == 2:
+        return boxes
+    
+    filtered = [b for b in boxes if int(b.cls[0]) == target_class]
+    return filtered
+
+
+def sort_boxes_by_predicted_position(boxes, last_head_x, last_head_y, last_move_x, last_move_y, center_x, center_y):
+    predicted_x = last_head_x - last_move_x
+    predicted_y = last_head_y - last_move_y
+    
+    def dist_sq(b):
+        try:
+            x1, y1, x2, y2 = b.xyxy[0]
+        except Exception:
+            return float('inf')
+        cx = (x1 + x2) / 2.0
+        cy = (y1 + y2) / 2.0
+        dx = cx - predicted_x
+        dy = cy - predicted_y
+        return dx * dx + dy * dy
+    
+    return sorted(boxes, key=dist_sq)
+
 def main():
     model = YOLO("best.pt")
     mouse = Controller()
@@ -70,7 +130,6 @@ def main():
     center_x = SCREEN_WIDTH // 2
     center_y = SCREEN_HEIGHT // 2
 
-    # Ensure save directory exists
     os.makedirs(SAVE_DIR, exist_ok=True)
 
     print(f"\nTracking '", end="")
@@ -82,6 +141,16 @@ def main():
 
     frame_count = 0
     fps_time = time.time()
+    aim_frame_counter = 0
+    last_head_x = center_x
+    last_head_y = center_y
+    last_move_x = 0
+    last_move_y = 0
+    frames_since_detection = 0
+    prev_target_x = center_x
+    prev_target_y = center_y
+    mouse_x = 960
+    mouse_y = 540
 
     try:
         while True:
@@ -89,6 +158,8 @@ def main():
             results = model(frame, name=f"{time.time()}.jpg", verbose=False, save=False)
 
             frame_count += 1
+            aim_frame_counter += 1
+            frames_since_detection += 1
             elapsed = time.time() - fps_time
             if elapsed >= 1.0:
                 fps = frame_count / elapsed
@@ -96,61 +167,39 @@ def main():
                 frame_count = 0
                 fps_time = time.time()
 
+            if aim_frame_counter % 2 != 0:
+                continue
+
             for result in results:
                 boxes = result.boxes.cpu().numpy()
-                # Sort boxes by distance from screen center (closest first)
-                boxes = sort_boxes_by_center_distance(boxes, center_x, center_y)
+                boxes = filter_boxes_by_class(boxes, target_class)
                 
-                for box in boxes:
+                if len(boxes) > 0:
+                    # if frames_since_detection < 5:
+                    #     boxes = sort_boxes_by_predicted_position(boxes, last_head_x, last_head_y, last_move_x, last_move_y, center_x, center_y)
+                    # else:
+                    #     boxes = sort_boxes_by_center_distance(boxes, center_x, center_y)
+                    boxes = sort_boxes_by_center_distance(boxes, center_x, center_y)
+                    closest_box = boxes[0]
+                    head_x, head_y = get_head_position(closest_box)
                     
-                    cls = int(box.cls[0])
-                    conf = box.conf[0]
-
-                    # Check if target matches based on selection
-                    if target_class == 2:
-                        # Track everyone (both CT and T)
-                        target_matches = conf > 0.6
+                    target_shift_x = head_x - prev_target_x - last_move_x
+                    target_shift_y = head_y - prev_target_y - last_move_y
+                    target_shift = math.sqrt(target_shift_x * target_shift_x + target_shift_y * target_shift_y)
+                    
+                    if target_shift > 40:
+                        move_x, move_y = move_mouse_smoothly(mouse, head_x, head_y, center_x, center_y, max_movement=800, hysteresis=4)
+                        prev_target_x = head_x
+                        prev_target_y = head_y
                     else:
-                        # Track specific class
-                        target_matches = (cls == target_class and conf > 0.6)
+                        move_x, move_y = move_mouse_smoothly(mouse, prev_target_x, prev_target_y, center_x, center_y, max_movement=800, hysteresis=4)
                     
-                    if target_matches:
-                        x1, y1, x2, y2 = box.xyxy[0]
-                        # Target upper part of the box (head area) instead of center
-                        target_x = int((x1 + x2) / 2)  # Center X
-                        target_y = int(y1 + (y2 - y1) * 0.15)  # Upper 0.15% of box height
-                        # Calculate relative movement from screen center
-                        dx = target_x - center_x
-                        dy = target_y - center_y
-                        # Calculate distance to target
-                        distance = (dx**2 + dy**2)**0.5
-                        
-                        # Calculate angle towards target
-                        angle = math.atan2(dy, dx)
-                        
-                        # Move 100px in the direction of the angle
-                        move_distance = min(100, distance)
-                        move_dx = int(move_distance * math.cos(angle))
-                        move_dy = int(move_distance * math.sin(angle))
-                        
-                        mouse.move(move_dx, move_dy)
-                        print(f"Moved mouse towards target (angle: {math.degrees(angle):.1f}°): ({move_dx}, {move_dy})")
-                        
-                        # Current cursor position is at center + movement offset
-                        cursor_x = center_x + move_dx
-                        cursor_y = center_y + move_dy
-                        
-                        # Check if cursor is close enough to target
-                        dist_to_target = ((cursor_x - target_x)**2 + (cursor_y - target_y)**2)**0.5
-                        print(f"Current position: ({cursor_x}, {cursor_y}), Target: ({target_x}, {target_y}), Distance: {dist_to_target:.1f}px")
-                        
-                        # if dist_to_target < 10:
-                        #     time.sleep(0.2)  # Small delay before shooting
-                        #     mouse.click(Button.left, 1)
-                        #     print(f"SHOT! Distance to target: {dist_to_target:.1f}px")
-                        # break
+                    last_move_x = move_x
+                    last_move_y = move_y
+                    last_head_x = head_x
+                    last_head_y = head_y
+                    frames_since_detection = 0
 
-            #time.sleep(0.02)
 
     except KeyboardInterrupt:
         print("\nStopped.")
