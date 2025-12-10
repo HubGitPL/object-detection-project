@@ -71,27 +71,24 @@ def get_head_position(box):
     return int(head_x), int(head_y)
 
 
-def move_mouse_smoothly(mouse, target_x, target_y, center_x, center_y, max_movement=200, hysteresis=3, ):
-    speed = 0.2
-    curve = 1.6
+def move_mouse_smoothly(mouse, target_x, target_y, center_x, center_y, max_movement=100):
     offset_x = target_x - center_x
     offset_y = target_y - center_y
     
-    distance = math.hypot(offset_x, offset_y)
+    distance = math.sqrt(offset_x * offset_x + offset_y * offset_y)
     
-    if distance < hysteresis:
+    if distance < 4:
         return 0, 0
-    # if distance > max_movement:
-    #     scale = max_movement / distance
-    #     offset_x *= scale
-    #     offset_y *= scale
     
-    target_speed = (distance ** curve) / (distance) * speed
-
-    # --- 3. Apply the speed to the direction ---
-    # We multiply the normalized vector by our new target speed
-    move_x = (offset_x / distance) * target_speed
-    move_y = (offset_y / distance) * target_speed
+    if distance <= max_movement * 3:
+        max_movement = distance / 1.75
+    
+    if distance <= max_movement * 2:
+        max_movement = distance / 2.5
+    
+    angle = math.atan2(offset_y, offset_x)
+    move_x = math.cos(angle) * min(distance, max_movement)
+    move_y = math.sin(angle) * min(distance, max_movement)
     
     mouse.move(move_x, move_y)
     return move_x, move_y
@@ -123,12 +120,16 @@ def sort_boxes_by_predicted_position(boxes, last_head_x, last_head_y, last_move_
     return sorted(boxes, key=dist_sq)
 
 def main():
-    model = YOLO("best.pt")
+    model_path = "best.pt"
+    model = YOLO(model_path)
     mouse = Controller()
     target_class = get_target_class()
 
     center_x = SCREEN_WIDTH // 2
     center_y = SCREEN_HEIGHT // 2
+    
+    model_name = os.path.splitext(model_path)[0]
+    log_file = f"{model_name}_fps_log.txt"
 
     os.makedirs(SAVE_DIR, exist_ok=True)
 
@@ -151,6 +152,9 @@ def main():
     prev_target_y = center_y
     mouse_x = 960
     mouse_y = 540
+    
+    fps_history = []
+    fps_window_time = time.time()
 
     try:
         while True:
@@ -164,6 +168,7 @@ def main():
             if elapsed >= 1.0:
                 fps = frame_count / elapsed
                 print(f"FPS: {fps:.1f}", end="\r")
+                fps_history.append(fps)
                 frame_count = 0
                 fps_time = time.time()
 
@@ -188,11 +193,11 @@ def main():
                     target_shift = math.sqrt(target_shift_x * target_shift_x + target_shift_y * target_shift_y)
                     
                     if target_shift > 40:
-                        move_x, move_y = move_mouse_smoothly(mouse, head_x, head_y, center_x, center_y, max_movement=800, hysteresis=4)
+                        move_x, move_y = move_mouse_smoothly(mouse, head_x, head_y, center_x, center_y, max_movement=50)
                         prev_target_x = head_x
                         prev_target_y = head_y
                     else:
-                        move_x, move_y = move_mouse_smoothly(mouse, prev_target_x, prev_target_y, center_x, center_y, max_movement=800, hysteresis=4)
+                        move_x, move_y = move_mouse_smoothly(mouse, prev_target_x, prev_target_y, center_x, center_y, max_movement=50)
                     
                     last_move_x = move_x
                     last_move_y = move_y
@@ -202,7 +207,9 @@ def main():
 
 
     except KeyboardInterrupt:
-        print("\nStopped.")
+        with open(log_file, "a") as f:
+            str_fps_history = ", ".join([f"{fps}" for fps in fps_history])
+            f.write(f"{datetime.now()}: {str_fps_history}\n")
 
 
 if __name__ == "__main__":
