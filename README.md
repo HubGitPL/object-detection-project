@@ -165,19 +165,21 @@ uv run src/auto_aim.py
 
 3. Stop with `Ctrl+C`
 
-**Features**:
 
-- Frame skipping for performance optimization
-- Distance-based target prioritization
-- Smooth mouse movement with velocity limiting
-- Head position targeting (10% from top of bounding box)
-- FPS logging and monitoring
+**How crosshair movement works**:
+
+- Every other frame is used for aiming to keep FPS high.
+- Boxes are sorted by distance to the screen center; the closest is picked.
+- Head aim point is 10% from the top of the box; cursor offsets are computed to that point.
+- Movement is vector-based with a max step; closer targets shrink the max step for smooth deceleration.
+- Tiny offsets (<4 px) are ignored to avoid jitter; large jumps (>40 px shift) retarget to the new head position, otherwise keep interpolating toward the previous point.
 
 **Requirements**:
 
 - Model weights file named `best.pt` in project root
 - 1920x1080 screen resolution
 - Administrative privileges may be required for mouse control
+- **X11 Desktop Environment** - The project was designed for X11 desktop environment due to the screenshot tool used (MSS library)
 
 ### Project Structure
 
@@ -224,7 +226,7 @@ Projekt koncentruje się na trzech głównych scenariuszach:
 
 1. **Trenowanie Modelu** - Niestandardowe trenowanie modeli YOLOv12 na specjalistycznych zbiorach danych
 2. **Detekcja i Predykcja Obiektów** - Wykrywanie w czasie rzeczywistym na obrazach, filmach i katalogach
-3. **System Auto-Aim** - Zaawansowany system przechwytywania ekranu i automatycznego celowania dla gier FPS (CS2)
+3. **System Auto-Aim** - System przechwytywania ekranu i automatycznego celowania dla gier FPS (CS2)
 
 Scenariusz auto-aim przechwytuje zawartość ekranu w czasie rzeczywistym, wykrywa modele graczy (klasy CT/T) i automatycznie przesuwa kursor myszy do celowania w głowy przeciwników z płynną interpolacją i algorytmami predykcji.
 
@@ -373,19 +375,21 @@ uv run src/auto_aim.py
 
 3. Zatrzymaj przez `Ctrl+C`
 
-**Funkcje**:
 
-- Pomijanie klatek dla optymalizacji wydajności
-- Priorytetyzacja celów na podstawie odległości
-- Płynny ruch myszy z ograniczeniem prędkości
-- Celowanie w głowę (10% od góry ramki ograniczającej)
-- Logowanie i monitorowanie FPS
+**Jak działa ruch celownika**:
+
+- Do celowania używana jest co druga klatka, aby utrzymać wysokie FPS.
+- Ramki są sortowane według odległości od środka ekranu; wybierana jest najbliższa.
+- Punkt celowania to głowa, 10% od góry ramki; obliczany jest offset kursora do tego punktu.
+- Ruch jest wektorowy z maksymalnym krokiem; dla bliższych celów krok maleje, co zapewnia płynne wyhamowanie.
+- Bardzo małe przesunięcia (<4 px) są ignorowane, aby uniknąć drgań; duże skoki (>40 px) wymuszają przeskok do nowej głowy, inaczej kontynuowana jest interpolacja do poprzedniego punktu.
 
 **Wymagania**:
 
 - Plik wag modelu o nazwie `best.pt` w katalogu głównym projektu
 - Rozdzielczość ekranu 1920x1080
 - Uprawnienia administratora mogą być wymagane do sterowania myszą
+- **Środowisko X11** - Projekt został przygotowany dla środowiska graficznego X11 ze względu na wykorzystane narzędzie do zrzutów ekranu (biblioteka MSS)
 
 ### Struktura Projektu
 
