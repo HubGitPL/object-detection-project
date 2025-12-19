@@ -174,6 +174,26 @@ uv run src/auto_aim.py
 - Movement is vector-based with a max step; closer targets shrink the max step for smooth deceleration.
 - Tiny offsets (<4 px) are ignored to avoid jitter; large jumps (>40 px shift) retarget to the new head position, otherwise keep interpolating toward the previous point.
 
+**Mouse movement calculation using trigonometry**:
+
+The smooth mouse movement is calculated using trigonometric functions to ensure consistent and natural cursor motion:
+
+1. **Offset calculation**: First, we compute the X and Y offset between the target position (enemy head) and screen center
+2. **Distance calculation**: Euclidean distance is calculated using the Pythagorean theorem: `distance = sqrt(offset_x² + offset_y²)`
+3. **Dynamic speed adjustment**: Maximum movement per frame is dynamically reduced based on distance to target, creating smooth deceleration as the cursor approaches the target
+4. **Direction angle**: We calculate the movement angle using `atan2(offset_y, offset_x)`, which gives us the precise direction to the target
+5. **Vector decomposition**: The final movement is decomposed into X and Y components using:
+   - `move_x = cos(angle) × movement_distance`
+   - `move_y = sin(angle) × movement_distance`
+
+**Why trigonometry?**
+
+Using trigonometric functions ensures that:
+- Mouse moves at **constant speed** regardless of direction (diagonal movement isn't faster than horizontal/vertical)
+- Movement is **perfectly smooth** and natural-looking in all directions
+- The direction vector is **properly normalized**, preventing the common issue where diagonal movement would be √2 times faster
+- The algorithm can handle **any angle** with equal precision, making targeting predictable and accurate
+
 **Requirements**:
 
 - Model weights file named `best.pt` in project root
@@ -383,6 +403,24 @@ uv run src/auto_aim.py
 - Punkt celowania to głowa, 10% od góry ramki; obliczany jest offset kursora do tego punktu.
 - Ruch jest wektorowy z maksymalnym krokiem; dla bliższych celów krok maleje, co zapewnia płynne wyhamowanie.
 - Bardzo małe przesunięcia (<4 px) są ignorowane, aby uniknąć drgań; duże skoki (>40 px) wymuszają przeskok do nowej głowy, inaczej kontynuowana jest interpolacja do poprzedniego punktu.
+
+**Obliczanie ruchu myszką z użyciem funkcji trygonometrycznych**:
+
+Płynny ruch myszy jest wyliczany z wykorzystaniem funkcji trygonometrycznych, co zapewnia spójny i naturalny ruch kursora:
+
+1. **Obliczanie przesunięcia**: Najpierw obliczamy przesunięcie X i Y między pozycją docelową (głową przeciwnika) a środkiem ekranu
+2. **Obliczanie odległości**: Odległość euklidesowa jest wyliczana za pomocą twierdzenia Pitagorasa: `odległość = sqrt(offset_x² + offset_y²)`
+3. **Dynamiczne dostosowanie prędkości**: Maksymalny ruch na klatkę jest dynamicznie redukowany w zależności od odległości do celu, tworząc płynne wyhamowanie w miarę zbliżania się kursora do celu
+4. **Kąt kierunku**: Obliczamy kąt ruchu używając `atan2(offset_y, offset_x)`, co daje nam precyzyjny kierunek do celu
+5. **Rozkład wektora**: Końcowy ruch jest rozkładany na składowe X i Y za pomocą:
+   - `ruch_x = cos(kąt) × dystans_ruchu`
+   - `ruch_y = sin(kąt) × dystans_ruchu`
+
+**Dlaczego funkcje trygonometryczne?**
+
+Użycie funkcji trygonometrycznych zapewnia, że:
+- Mysz porusza się ze stałą prędkością niezależnie od kierunku (ruch po przekątnej nie jest szybszy niż poziomy/pionowy)
+- Wektor kierunku jest prawidłowo znormalizowany, co zapobiega powszechnemu problemowi, gdzie ruch po przekątnej byłby szybszy
 
 **Wymagania**:
 
